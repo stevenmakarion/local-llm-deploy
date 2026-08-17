@@ -1,5 +1,7 @@
 # local-llm-deploy
 
+![](images/preview.png)
+
 Running a large language model on your own hardware, in production, for real users — with
 the measured numbers from a deployment that has been serving continuously since June 2026.
 
