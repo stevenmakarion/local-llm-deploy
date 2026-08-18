@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""llm_healthcheck.py — prove a self-hosted model is actually serving.
+"""llm_healthcheck.py, prove a self-hosted model is actually serving.
 
 "The service is running" is not "the model answers." A model server will happily
 return 200 on /health while the weights failed to load, the GPU was taken by
@@ -10,12 +10,12 @@ This checks the things that actually break, in the order they break:
   1. PORT       is anything listening
   2. HEALTH     does the health endpoint answer
   3. MODEL      is the model the one you think it is
-  4. COMPLETION does a real generation come back — the only check that matters
+  4. COMPLETION does a real generation come back, the only check that matters
   5. LATENCY    first-token and tokens/sec, so you see degradation before users do
   6. GPU        which card, how much VRAM, who else is on it
   7. NUMA       are compute and memory on the same node (the 10x trap)
 
-Exit 0 healthy, 1 degraded, 2 down — so it drops straight into a cron or a
+Exit 0 healthy, 1 degraded, 2 down, so it drops straight into a cron or a
 monitoring check.
 
     llm_healthcheck.py --url http://127.0.0.1:8080 --model my-model
@@ -63,8 +63,7 @@ def check_completion(base, model, timeout=120):
     """THE check. Everything above can pass while this fails.
 
     REASONING MODELS BREAK NAIVE HEALTH CHECKS. A thinking model given
-    max_tokens=12 spends the entire budget reasoning and returns EMPTY content
-    — a perfectly healthy server that fails every probe forever. Found live on
+    max_tokens=12 spends the entire budget reasoning and returns EMPTY content, a perfectly healthy server that fails every probe forever. Found live on
     a 35B: 14 seconds, HTTP 200, zero content. So: ask for thinking to be
     disabled (harmlessly ignored by non-reasoning servers) AND leave enough
     headroom that a model which thinks anyway still has room to answer.
@@ -125,11 +124,11 @@ def check_numa():
             return True, "single-node or numactl absent", {}
         nodes = re.findall(r"node (\d+) size: (\d+) MB", out.stdout)
         if len(nodes) < 2:
-            return True, "single NUMA node — no locality risk", {}
+            return True, "single NUMA node, no locality risk", {}
         sizes = {n: int(s) for n, s in nodes}
         big = max(sizes, key=lambda k: sizes[k])
         return True, (f"{len(nodes)} NUMA nodes; largest is node {big} "
-                      f"({sizes[big] // 1024} GB) — pin the model there "
+                      f"({sizes[big] // 1024} GB), pin the model there "
                       f"(--cpunodebind={big} --membind={big})"), sizes
     except Exception:
         return True, "numa check skipped", {}
